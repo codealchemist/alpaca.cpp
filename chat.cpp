@@ -88,7 +88,7 @@ struct llama_model {
 
 // load the model's weights from a file
 bool llama_model_load(const std::string & fname, llama_model & model, gpt_vocab & vocab, int n_ctx) {
-    fprintf(stderr, "%s: loading model from '%s' - please wait ...\n", __func__, fname.c_str());
+    fprintf(stdout, "%s: loading model from '%s' - please wait ...\n", __func__, fname.c_str());
 
     std::vector<char> f_buf(1024*1024);
 
@@ -223,7 +223,7 @@ bool llama_model_load(const std::string & fname, llama_model & model, gpt_vocab 
 
         ctx_size += (5 + 10*n_layer)*256; // object overhead
 
-        fprintf(stderr, "%s: ggml ctx size = %6.2f MB\n", __func__, ctx_size/(1024.0*1024.0));
+        fprintf(stdout, "%s: ggml ctx size = %6.2f MB\n", __func__, ctx_size/(1024.0*1024.0));
     }
 
     // create the ggml context
@@ -310,7 +310,7 @@ bool llama_model_load(const std::string & fname, llama_model & model, gpt_vocab 
 
         const size_t memory_size = ggml_nbytes(model.memory_k) + ggml_nbytes(model.memory_v);
 
-        fprintf(stderr, "%s: memory_size = %8.2f MB, n_mem = %d\n", __func__, memory_size/1024.0/1024.0, n_mem);
+        fprintf(stdout, "%s: memory_size = %8.2f MB, n_mem = %d\n", __func__, memory_size/1024.0/1024.0, n_mem);
     }
 
     const size_t file_offset = fin.tellg();
@@ -328,7 +328,7 @@ bool llama_model_load(const std::string & fname, llama_model & model, gpt_vocab 
             fname_part += "." + std::to_string(i);
         }
 
-        fprintf(stderr, "%s: loading model part %d/%d from '%s'\n", __func__, i+1, n_parts, fname_part.c_str());
+        fprintf(stdout, "%s: loading model part %d/%d from '%s'\n", __func__, i+1, n_parts, fname_part.c_str());
 
         fin = std::ifstream(fname_part, std::ios::binary);
         fin.rdbuf()->pubsetbuf(f_buf.data(), f_buf.size());
@@ -339,7 +339,7 @@ bool llama_model_load(const std::string & fname, llama_model & model, gpt_vocab 
             int n_tensors = 0;
             size_t total_size = 0;
 
-            fprintf(stderr, "%s: ", __func__);
+            fprintf(stdout, "%s: ", __func__);
 
             while (true) {
                 int32_t n_dims;
@@ -439,7 +439,7 @@ bool llama_model_load(const std::string & fname, llama_model & model, gpt_vocab 
 
                 if (0) {
                     static const char * ftype_str[] = { "f32", "f16", "q4_0", "q4_1", };
-                    fprintf(stderr, "%24s - [%5d, %5d], type = %6s, split = %d\n", name.data(), ne[0], ne[1], ftype_str[ftype], split_type);
+                    fprintf(stdout, "%24s - [%5d, %5d], type = %6s, split = %d\n", name.data(), ne[0], ne[1], ftype_str[ftype], split_type);
                 }
 
                 size_t bpe = 0;
@@ -504,14 +504,14 @@ bool llama_model_load(const std::string & fname, llama_model & model, gpt_vocab 
 
                 //fprintf(stderr, "%42s - [%5d, %5d], type = %6s, %6.2f MB\n", name.data(), ne[0], ne[1], ftype == 0 ? "float" : "f16", ggml_nbytes(tensor)/1024.0/1024.0);
                 if (++n_tensors % 8 == 0) {
-                    fprintf(stderr, ".");
-                    fflush(stderr);
+                    fprintf(stdout, ".");
+                    fflush(stdout);
                 }
             }
 
-            fprintf(stderr, " done\n");
+            fprintf(stdout, " done\n");
 
-            fprintf(stderr, "%s: model size = %8.2f MB / num tensors = %d\n", __func__, total_size/1024.0/1024.0, n_tensors);
+            fprintf(stdout, "%s: model size = %8.2f MB / num tensors = %d\n", __func__, total_size/1024.0/1024.0, n_tensors);
         }
 
         fin.close();
@@ -805,7 +805,7 @@ int main(int argc, char ** argv) {
         params.seed = time(NULL);
     }
 
-    fprintf(stderr, "%s: seed = %d\n", __func__, params.seed);
+    fprintf(stdout, "%s: seed = %d\n", __func__, params.seed);
 
     std::mt19937 rng(params.seed);
     // if (params.prompt.empty()) {
@@ -833,8 +833,8 @@ int main(int argc, char ** argv) {
 
     // print system information
     {
-        fprintf(stderr, "\n");
-        fprintf(stderr, "system_info: n_threads = %d / %d | %s\n",
+        fprintf(stdout, "\n");
+        fprintf(stdout, "system_info: n_threads = %d / %d | %s\n",
                 params.n_threads, std::thread::hardware_concurrency(), llama_print_system_info());
     }
 
@@ -895,7 +895,7 @@ int main(int argc, char ** argv) {
         }
 #endif
 
-        fprintf(stderr, "%s: interactive mode on.\n", __func__);
+        fprintf(stdout, "%s: interactive mode on.\n", __func__);
 
         // if(antiprompt_inp.size()) {
         //     fprintf(stderr, "%s: reverse prompt: '%s'\n", __func__, params.antiprompt.c_str());
@@ -906,8 +906,8 @@ int main(int argc, char ** argv) {
         //     fprintf(stderr, "\n");
         // }
     }
-    fprintf(stderr, "sampling parameters: temp = %f, top_k = %d, top_p = %f, repeat_last_n = %i, repeat_penalty = %f\n", params.temp, params.top_k, params.top_p, params.repeat_last_n, params.repeat_penalty);
-    fprintf(stderr, "\n\n");
+    fprintf(stdout, "sampling parameters: temp = %f, top_k = %d, top_p = %f, repeat_last_n = %i, repeat_penalty = %f\n", params.temp, params.top_k, params.top_p, params.repeat_last_n, params.repeat_penalty);
+    fprintf(stdout, "\n\n");
 
     std::vector<gpt_vocab::id> embd;
 
@@ -921,12 +921,14 @@ int main(int argc, char ** argv) {
 
 
     if (params.interactive) {
-        fprintf(stderr, "== Running in chat mode. ==\n"
+        fprintf(stdout, "== Running in chat mode. ==\n"
 #if defined (__unix__) || (defined (__APPLE__) && defined (__MACH__)) || defined (_WIN32)
                " - Press Ctrl+C to interject at any time.\n"
 #endif
                " - Press Return to return control to LLaMA.\n"
                " - If you want to submit another line, end your input in '\\'.\n");
+
+        fprintf(stdout, "\nALPACA LOADED\n");
     }
 
     // we may want to slide the input window along with the context, but for now we restrict to the context length
@@ -1035,7 +1037,7 @@ int main(int argc, char ** argv) {
                 embd_inp.insert(embd_inp.end(), prompt_inp.begin(), prompt_inp.end());
                 
 
-                printf("\n> ");
+                // printf("\n> ");
 
                 // currently being interactive
                 bool another_line=true;
@@ -1044,12 +1046,13 @@ int main(int argc, char ** argv) {
                     char buf[256] = {0};
                     int n_read;
                     if(params.use_color) printf(ANSI_BOLD ANSI_COLOR_GREEN);
+
                     if (scanf("%255[^\n]%n%*c", buf, &n_read) <= 0) {
                         // presumable empty line, consume the newline
                         if (scanf("%*c") <= 0) { /*ignore*/ }
                         n_read=0;
                     }
-                    if(params.use_color) printf(ANSI_COLOR_RESET);
+                    // if(params.use_color) printf(ANSI_COLOR_RESET);
 
                     if (n_read > 0 && buf[n_read-1]=='\\') {
                         another_line = true;
@@ -1106,7 +1109,7 @@ int main(int argc, char ** argv) {
     ggml_free(model.ctx);
 
     if (params.use_color) {
-        printf(ANSI_COLOR_RESET);
+        // printf(ANSI_COLOR_RESET);
     }
 
     return 0;
