@@ -36,3 +36,4 @@ Release/
 CMakeFiles/
 CMakeCache.txt
 *.dir/
+*.bin
